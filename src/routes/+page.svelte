@@ -1,16 +1,19 @@
 <script lang="ts">
-  import { onMount } from "svelte";
+  import { onMount, onDestroy } from "svelte";
+  import { tick } from "svelte";
   import Papa from "papaparse";
 
   let csvDataU: any[] = [];
   let upcomingBirthdays: any[] = [];
+  let countdown: string = "";
+  let interval: NodeJS.Timeout;
 
   onMount(async () => {
     const response = await fetch("data.csv");
     const text = await response.text();
     const result = Papa.parse(text, { header: true }).data;
     // console.log(result)
-    
+
     const today = new Date();
     upcomingBirthdays = result.filter((row: any) => {
       const birthdate = new Date(
@@ -24,43 +27,78 @@
       Name: row.Name,
       Date: `${row.Month} ${row.Day}, ${row.Year}`,
     }));
+
+    // Initialize the countdown
+    updateCountdown();
+    // Update the countdown every second
+    interval = setInterval(updateCountdown, 1000);
   });
+
+  onDestroy(() => {
+    // Cleanup the interval when the component is unmounted
+    clearInterval(interval);
+  });
+
+  async function updateCountdown() {
+    const currentDate = new Date();
+    const firstBirthdayDate = new Date(`${upcomingBirthdays[0].Month} ${upcomingBirthdays[0].Day}`);
+    firstBirthdayDate.setFullYear(currentDate.getFullYear());
+
+    const timeRemaining = firstBirthdayDate - currentDate;
+    const days = Math.floor(timeRemaining / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((timeRemaining % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const minutes = Math.floor((timeRemaining % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((timeRemaining % (1000 * 60)) / 1000);
+
+    countdown = `${days} days ${hours} hours ${minutes} minutes ${seconds} seconds`;
+
+    // Use tick to trigger a Svelte update
+    await tick();
+  }
 </script>
 
 <main>
-    {#if upcomingBirthdays.length > 0}
-      <h1>Birthday Reminders</h1>
-      <ul>
-        {#each upcomingBirthdays as row, index}
-          <li data-id={index}>
-            {row.Name}'s birthday is on {row.Month}
-            {row.Day}
-          </li>
-        {/each}
-      </ul>
-    {/if}
+  {#if upcomingBirthdays.length > 0}
+    <h1>Countdown to Next Birthday</h1>
+    <p>Next birthday: {upcomingBirthdays[0].Name}'s birthday on {upcomingBirthdays[0].Month} {upcomingBirthdays[0].Day}</p>
+    <p>Time remaining: {countdown}</p>
+  {:else}
+    <p>No upcoming birthdays found.</p>
+  {/if}
 
-    {#if csvDataU.length > 0}
-      <h1>CSV Data</h1>
-      <table>
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>Date</th>
+  {#if upcomingBirthdays.length > 0}
+    <h1>Birthday Reminders</h1>
+    <ul>
+      {#each upcomingBirthdays as row, index}
+        <li data-id={index}>
+          {row.Name}'s birthday is on {row.Month}
+          {row.Day}
+        </li>
+      {/each}
+    </ul>
+  {/if}
+
+  {#if csvDataU.length > 0}
+    <h1>CSV Data</h1>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Date</th>
+        </tr>
+      </thead>
+      <tbody>
+        {#each csvDataU as row, rowIndex}
+          <tr data-id={rowIndex}>
+            <td>{row.Name}</td>
+            <td>{row.Date}</td>
           </tr>
-        </thead>
-        <tbody>
-          {#each csvDataU as row, rowIndex}
-            <tr data-id={rowIndex}>
-              <td>{row.Name}</td>
-              <td>{row.Date}</td>
-            </tr>
-          {/each}
-        </tbody>
-      </table>
-    {:else}
-      <p>No CSV data available.</p>
-    {/if}
+        {/each}
+      </tbody>
+    </table>
+  {:else}
+    <p>No CSV data available.</p>
+  {/if}
 </main>
 
 <!-- <script lang="ts">
