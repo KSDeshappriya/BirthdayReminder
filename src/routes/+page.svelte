@@ -40,8 +40,8 @@
   });
 
   async function updateCountdown() {
-    const currentDate = new Date();
-    const firstBirthdayDate = new Date(`${upcomingBirthdays[0].Month} ${upcomingBirthdays[0].Day}`);
+    const currentDate: any = new Date();
+    const firstBirthdayDate: any = new Date(`${upcomingBirthdays[0].Month} ${upcomingBirthdays[0].Day}`);
     firstBirthdayDate.setFullYear(currentDate.getFullYear());
 
     const timeRemaining = firstBirthdayDate - currentDate;
