@@ -5,6 +5,7 @@
 
   let csvDataU: any[] = [];
   let upcomingBirthdays: any[] = [];
+  let countArr: any[] = [];
   let countdown: string = "";
   let interval: NodeJS.Timeout;
 
@@ -41,16 +42,23 @@
 
   async function updateCountdown() {
     const currentDate: any = new Date();
-    const firstBirthdayDate: any = new Date(`${upcomingBirthdays[0].Month} ${upcomingBirthdays[0].Day}`);
+    const firstBirthdayDate: any = new Date(
+      `${upcomingBirthdays[0].Month} ${upcomingBirthdays[0].Day}`
+    );
     firstBirthdayDate.setFullYear(currentDate.getFullYear());
 
     const timeRemaining = firstBirthdayDate - currentDate;
     const days = Math.floor(timeRemaining / (1000 * 60 * 60 * 24));
-    const hours = Math.floor((timeRemaining % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-    const minutes = Math.floor((timeRemaining % (1000 * 60 * 60)) / (1000 * 60));
+    const hours = Math.floor(
+      (timeRemaining % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)
+    );
+    const minutes = Math.floor(
+      (timeRemaining % (1000 * 60 * 60)) / (1000 * 60)
+    );
     const seconds = Math.floor((timeRemaining % (1000 * 60)) / 1000);
 
     countdown = `${days} days ${hours} hours ${minutes} minutes ${seconds} seconds`;
+    countArr = [`${days}`, `${hours}`, `${minutes}`, `${seconds}`];
 
     // Use tick to trigger a Svelte update
     await tick();
@@ -58,14 +66,28 @@
 </script>
 
 <main>
+  <!-- countdown -->
   {#if upcomingBirthdays.length > 0}
-    <h1>Countdown to Next Birthday</h1>
-    <p>Next birthday: {upcomingBirthdays[0].Name}'s birthday on {upcomingBirthdays[0].Month} {upcomingBirthdays[0].Day}</p>
-    <p>Time remaining: {countdown}</p>
+    <div class="countdown">
+      <h1 id="headline">Countdown to next birthday</h1>
+      <p>
+        {upcomingBirthdays[0].Name}'s birthday on {upcomingBirthdays[0].Month}
+        {upcomingBirthdays[0].Day}
+      </p>
+      <div id="countdown">
+        <ul>
+          <li><span id="days">{countArr[0]}</span>days</li>
+          <li><span id="hours">{countArr[1]}</span>Hours</li>
+          <li><span id="minutes">{countArr[2]}</span>Minutes</li>
+          <li><span id="seconds">{countArr[3]}</span>Seconds</li>
+        </ul>
+      </div>
+    </div>
   {:else}
     <p>No upcoming birthdays found.</p>
   {/if}
 
+  <!-- reminder -->
   {#if upcomingBirthdays.length > 0}
     <h1>Birthday Reminders</h1>
     <ul>
@@ -78,6 +100,7 @@
     </ul>
   {/if}
 
+  <!-- data table -->
   {#if csvDataU.length > 0}
     <h1>CSV Data</h1>
     <table>
@@ -267,5 +290,51 @@
   }
   tr:nth-child(even) {
     background-color: #f2f2f2;
+  }
+
+  /* Countdown styles */
+
+  .countdown {
+    color: #333;
+    margin: 0 auto;
+    text-align: center;
+  }
+
+  .countdown h1 {
+    font-weight: normal;
+    letter-spacing: 0.125rem;
+    text-transform: uppercase;
+  }
+
+  .countdown li {
+    display: inline-block;
+    font-size: 1.5em;
+    list-style-type: none;
+    padding: 1em;
+    text-transform: uppercase;
+  }
+
+  .countdown li span {
+    display: block;
+    font-size: 4.5rem;
+  }
+
+  .countdown .emoji span {
+    font-size: 4rem;
+    padding: 0 0.5rem;
+  }
+
+  @media all and (max-width: 768px) {
+    .countdown h1 {
+      font-size: calc(1.5rem * var(--smaller));
+    }
+
+    .countdown li {
+      font-size: calc(1.125rem * var(--smaller));
+    }
+
+    .countdown li span {
+      font-size: calc(3.375rem * var(--smaller));
+    }
   }
 </style>
